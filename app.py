@@ -1,21 +1,34 @@
 from flask import Flask, request, jsonify
 import requests
 import os
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app)  # Browser se direct access ke liye
 
-@app.route('/api/check-vehicle', methods=['POST'])
+@app.route('/api/check-vehicle', methods=['POST', 'GET', 'OPTIONS'])
 def check_vehicle():
     try:
-        data = request.get_json()
+        # GET request handle karein browser ke liye
+        if request.method == 'GET':
+            vehicle_no = request.args.get('vehicle_no')
+            if not vehicle_no:
+                return jsonify({
+                    'status': False,
+                    'message': 'Use: /api/check-vehicle?vehicle_no=UP61S6030'
+                })
+        else:
+            # POST request handle karein
+            data = request.get_json() or {}
+            vehicle_no = data.get('vehicle_no', request.form.get('vehicle_no'))
         
-        if not data or 'vehicle_no' not in data:
+        if not vehicle_no:
             return jsonify({
                 'status': False,
                 'message': 'vehicle_no parameter is required'
             }), 400
         
-        vehicle_no = data['vehicle_no'].strip().upper()
+        vehicle_no = vehicle_no.strip().upper()
         
         if not vehicle_no:
             return jsonify({
@@ -41,39 +54,27 @@ def check_vehicle():
         
         return jsonify(api_result)
         
-    except requests.exceptions.Timeout:
-        return jsonify({
-            'status': False,
-            'message': 'API request timeout'
-        }), 408
-    except requests.exceptions.RequestException as e:
-        return jsonify({
-            'status': False,
-            'message': f'Network error: {str(e)}'
-        }), 500
     except Exception as e:
         return jsonify({
             'status': False,
-            'message': f'Server error: {str(e)}'
+            'message': f'Error: {str(e)}'
         }), 500
 
-# Health check endpoint
-@app.route('/health', methods=['GET'])
-def health_check():
-    return jsonify({
-        'status': 'healthy',
-        'message': 'Vehicle API is running',
-        'endpoint': 'POST /api/check-vehicle'
-    })
-
-# Root endpoint - API info
+# Root endpoint - Simple API info
 @app.route('/', methods=['GET'])
 def api_info():
     return jsonify({
-        'message': 'Vehicle Challan Check API',
-        'usage': 'POST /api/check-vehicle with {"vehicle_no": "VEHICLE_NUMBER"}',
-        'example': 'curl -X POST https://vehicel-checker.onrender.com/api/check-vehicle -H "Content-Type: application/json" -d \'{"vehicle_no": "UP61S6030"}\''
+        'api_name': 'Vehicle Challan Check API',
+        'endpoint': '/api/check-vehicle',
+        'methods': ['GET', 'POST'],
+        'usage_get': 'https://vehicel-checker.onrender.com/api/check-vehicle?vehicle_no=UP61S6030',
+        'usage_post': 'POST with JSON: {"vehicle_no": "UP61S6030"}',
+        'example_curl': 'curl "https://vehicel-checker.onrender.com/api/check-vehicle?vehicle_no=UP61S6030"'
     })
+
+@app.route('/health', methods=['GET'])
+def health_check():
+    return jsonify({'status': 'healthy'})
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
