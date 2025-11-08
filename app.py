@@ -5,81 +5,52 @@ import requests
 app = Flask(__name__)
 CORS(app)
 
-# External API URL template
-EXTERNAL_API_URL = "https://seller-ki-mkc.taitanx.workers.dev/?mobile={mobile_number}"
-
-# Cache to store previous searches (optional)
-search_cache = {}
-
 @app.route('/')
 def home():
     return jsonify({
-        "message": "🚀 Mobile Data Search API - GARAV EDITION 🚀",
-        "developer": "@oxmzoo",
-        "external_api": "https://seller-ki-mkc.taitanx.workers.dev/",
-        "garav": "YEHI TO GARAV KI BAAT HAI!",
-        "endpoints": {
-            "search_mobile": "/api/search/<mobile_number>",
-            "bulk_search": "/api/bulk-search?mobiles=number1,number2,number3",
-            "cache_status": "/api/cache",
-            "developer_info": "/api/developer",
-            "health": "/health"
-        },
-        "credit": "🚀 @oxmzoo - GARAV HAI HUMKO 🚀"
+        "message": "Mobile Search API",
+        "developer": "@gaurav_cyber",
+        "usage": "Use ?mobile=number to search"
     })
 
-# Search any mobile number using external API
-@app.route('/api/search/<mobile>')
-def search_by_mobile(mobile):
+# Search mobile number
+@app.route('/api/search')
+def search_by_mobile():
+    mobile = request.args.get('mobile', '')
+    
+    if not mobile:
+        return jsonify({
+            "error": "Mobile number required",
+            "example": "/api/search?mobile=7003445877"
+        }), 400
+    
     try:
-        # Check cache first
-        if mobile in search_cache:
-            return jsonify({
-                "search_query": mobile,
-                "source": "cache",
-                "data": search_cache[mobile],
-                "credit": "🚀 @oxmzoo - GARAV HAI HUMKO 🚀"
-            })
-        
         # Call external API
-        api_url = EXTERNAL_API_URL.format(mobile_number=mobile)
+        api_url = f"https://seller-ki-mkc.taitanx.workers.dev/?mobile={mobile}"
         response = requests.get(api_url, timeout=10)
         
         if response.status_code == 200:
             data = response.json()
-            
-            # Store in cache
-            search_cache[mobile] = data
-            
-            return jsonify({
-                "search_query": mobile,
-                "source": "external_api",
-                "api_used": EXTERNAL_API_URL,
-                "data": data,
-                "credit": "🚀 @oxmzoo - GARAV HAI HUMKO 🚀",
-                "message": "DATA MIL GAYA! GARAV HAI HUMKO! 🚀"
-            })
+            # Add credit
+            if isinstance(data, dict):
+                data["credit"] = "@gaurav_cyber"
+            return jsonify(data)
         else:
             return jsonify({
                 "error": "External API error",
-                "status_code": response.status_code,
-                "search_query": mobile
+                "status_code": response.status_code
             }), 500
             
     except requests.exceptions.Timeout:
         return jsonify({
-            "error": "External API timeout",
-            "search_query": mobile,
-            "message": "API response nahi de rahi, thoda time lagega!"
+            "error": "External API timeout"
         }), 504
     except Exception as e:
         return jsonify({
-            "error": str(e),
-            "search_query": mobile,
-            "message": "Kuch toh gadbad hai!"
+            "error": str(e)
         }), 500
 
-# Bulk search multiple mobile numbers
+# Bulk search multiple numbers
 @app.route('/api/bulk-search')
 def bulk_search():
     mobiles_param = request.args.get('mobiles', '')
@@ -94,87 +65,27 @@ def bulk_search():
     
     for mobile in mobiles:
         try:
-            api_url = EXTERNAL_API_URL.format(mobile_number=mobile)
+            api_url = f"https://seller-ki-mkc.taitanx.workers.dev/?mobile={mobile}"
             response = requests.get(api_url, timeout=10)
             
             if response.status_code == 200:
                 results[mobile] = response.json()
-                # Cache the result
-                search_cache[mobile] = response.json()
             else:
                 results[mobile] = {"error": f"API returned {response.status_code}"}
                 
         except Exception as e:
             results[mobile] = {"error": str(e)}
     
-    return jsonify({
-        "bulk_search_results": results,
-        "total_searched": len(mobiles),
-        "successful": len([r for r in results.values() if "error" not in r]),
-        "credit": "🚀 @oxmzoo - GARAV HAI HUMKO 🚀"
-    })
-
-# Get cache status
-@app.route('/api/cache')
-def cache_status():
-    return jsonify({
-        "cached_numbers": list(search_cache.keys()),
-        "cache_size": len(search_cache),
-        "credit": "🚀 @oxmzoo - GARAV HAI HUMKO 🚀"
-    })
-
-# Clear cache (optional)
-@app.route('/api/clear-cache')
-def clear_cache():
-    cache_size = len(search_cache)
-    search_cache.clear()
-    return jsonify({
-        "message": "Cache cleared successfully!",
-        "cleared_entries": cache_size,
-        "credit": "🚀 @oxmzoo - GARAV HAI HUMKO 🚀"
-    })
+    # Add credit to final response
+    results["credit"] = "@gaurav_cyber"
+    return jsonify(results)
 
 # Health check
 @app.route('/health')
 def health():
     return jsonify({
         "status": "healthy",
-        "service": "mobile-search-api", 
-        "external_api": "ACTIVE ✅",
-        "cache_system": "WORKING ✅",
-        "garav_level": "100% 🚀",
-        "message": "SAB KUCCH GARAV SE CHAL RAHA HAI!"
-    })
-
-# Developer info
-@app.route('/api/developer')
-def developer_info():
-    return jsonify({
-        "developer": "@oxmzoo",
-        "credit": "🚀 @oxmzoo - GARAV HAI HUMKO 🚀", 
-        "features": [
-            "Any Mobile Number Search",
-            "External API Integration",
-            "Bulk Search Support",
-            "Caching System",
-            "Fast Response"
-        ],
-        "special_message": "AB KISI BHI MOBILE KA DATA SEARCH KARO! 🔥"
-    })
-
-# Special Garav endpoint
-@app.route('/api/garav')
-def garav_special():
-    return jsonify({
-        "message": "🚀 GARAV KI BAAT! 🚀", 
-        "description": "EXTERNAL API INTEGRATION BHI @oxmzoo NE HI KIYA!",
-        "capabilities": [
-            "Koi bhi mobile number search karo",
-            "Bulk search support",
-            "Smart caching system", 
-            "Fast response time"
-        ],
-        "final_message": "GARAV HAI HUMKO APNI TECH SKILLS PE! 🔥"
+        "service": "mobile-search-api"
     })
 
 if __name__ == '__main__':
