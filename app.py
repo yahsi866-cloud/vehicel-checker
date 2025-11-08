@@ -8,24 +8,25 @@ CORS(app)
 @app.route('/')
 def home():
     return jsonify({
-        "message": "Mobile Search API",
-        "usage": "Use ?mobile=number to search"
+        "message": "Aadhar Search API",
+        "usage": "Use ?aadhar=number to search",
+        "example": "/api/search?aadhar=511238562953"
     })
 
-# Search mobile number
+# Search Aadhar number
 @app.route('/api/search')
-def search_by_mobile():
-    mobile = request.args.get('mobile', '')
+def search_by_aadhar():
+    aadhar = request.args.get('aadhar', '')
     
-    if not mobile:
+    if not aadhar:
         return jsonify({
-            "error": "Mobile number required",
-            "example": "/api/search?mobile=7003445877"
+            "error": "Aadhar number required",
+            "example": "/api/search?aadhar=511238562953"
         }), 400
     
     try:
         # Call external API
-        api_url = f"https://seller-ki-mkc.taitanx.workers.dev/?mobile={mobile}"
+        api_url = f"https://seller-ki-mkc.taitanx.workers.dev/?aadhar={aadhar}"
         response = requests.get(api_url, timeout=10)
         
         if response.status_code == 200:
@@ -35,7 +36,11 @@ def search_by_mobile():
             if isinstance(data, dict) and "developer" in data:
                 del data["developer"]
             
-            # Add credit
+            # Remove credit field if exists
+            if isinstance(data, dict) and "credit" in data:
+                del data["credit"]
+            
+            # Add our credit
             if isinstance(data, dict):
                 data["credit"] = "@gaurav_cyber"
             
@@ -58,23 +63,23 @@ def search_by_mobile():
             "credit": "@gaurav_cyber"
         }), 500
 
-# Bulk search multiple numbers
+# Bulk search multiple Aadhar numbers
 @app.route('/api/bulk-search')
 def bulk_search():
-    mobiles_param = request.args.get('mobiles', '')
-    if not mobiles_param:
+    aadhars_param = request.args.get('aadhars', '')
+    if not aadhars_param:
         return jsonify({
-            "error": "Mobile numbers required",
-            "example": "/api/bulk-search?mobiles=7003445877,9876543210,7278210621",
+            "error": "Aadhar numbers required",
+            "example": "/api/bulk-search?aadhars=511238562953,511238562954,511238562955",
             "credit": "@gaurav_cyber"
         }), 400
     
-    mobiles = [m.strip() for m in mobiles_param.split(',')]
+    aadhars = [a.strip() for a in aadhars_param.split(',')]
     results = {}
     
-    for mobile in mobiles:
+    for aadhar in aadhars:
         try:
-            api_url = f"https://seller-ki-mkc.taitanx.workers.dev/?mobile={mobile}"
+            api_url = f"https://seller-ki-mkc.taitanx.workers.dev/?aadhar={aadhar}"
             response = requests.get(api_url, timeout=10)
             
             if response.status_code == 200:
@@ -82,12 +87,14 @@ def bulk_search():
                 # Remove developer field
                 if isinstance(data, dict) and "developer" in data:
                     del data["developer"]
-                results[mobile] = data
+                if isinstance(data, dict) and "credit" in data:
+                    del data["credit"]
+                results[aadhar] = data
             else:
-                results[mobile] = {"error": f"API returned {response.status_code}"}
+                results[aadhar] = {"error": f"API returned {response.status_code}"}
                 
         except Exception as e:
-            results[mobile] = {"error": str(e)}
+            results[aadhar] = {"error": str(e)}
     
     # Add credit to final response
     results["credit"] = "@gaurav_cyber"
@@ -97,7 +104,23 @@ def bulk_search():
 @app.route('/health')
 def health():
     return jsonify({
-        "status": "healthy"
+        "status": "healthy",
+        "service": "aadhar-search-api"
+    })
+
+# Get API info
+@app.route('/api/info')
+def api_info():
+    return jsonify({
+        "api_name": "Aadhar Search API",
+        "external_api": "https://seller-ki-mkc.taitanx.workers.dev/",
+        "endpoints": {
+            "single_search": "/api/search?aadhar=511238562953",
+            "bulk_search": "/api/bulk-search?aadhars=number1,number2,number3",
+            "health": "/health",
+            "info": "/api/info"
+        },
+        "credit": "@gaurav_cyber"
     })
 
 if __name__ == '__main__':
