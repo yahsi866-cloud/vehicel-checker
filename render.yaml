@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: user-data-api
+    name: aadhar-search-api
     env: python
     plan: free
     buildCommand: pip install -r requirements.txt
