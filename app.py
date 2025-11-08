@@ -30,23 +30,32 @@ def search_by_mobile():
         
         if response.status_code == 200:
             data = response.json()
+            
+            # Remove developer field from external API response
+            if isinstance(data, dict) and "developer" in data:
+                del data["developer"]
+            
             # Add credit
             if isinstance(data, dict):
                 data["credit"] = "@gaurav_cyber"
+            
             return jsonify(data)
         else:
             return jsonify({
                 "error": "External API error",
-                "status_code": response.status_code
+                "status_code": response.status_code,
+                "credit": "@gaurav_cyber"
             }), 500
             
     except requests.exceptions.Timeout:
         return jsonify({
-            "error": "External API timeout"
+            "error": "External API timeout",
+            "credit": "@gaurav_cyber"
         }), 504
     except Exception as e:
         return jsonify({
-            "error": str(e)
+            "error": str(e),
+            "credit": "@gaurav_cyber"
         }), 500
 
 # Bulk search multiple numbers
@@ -56,7 +65,8 @@ def bulk_search():
     if not mobiles_param:
         return jsonify({
             "error": "Mobile numbers required",
-            "example": "/api/bulk-search?mobiles=7003445877,9876543210,7278210621"
+            "example": "/api/bulk-search?mobiles=7003445877,9876543210,7278210621",
+            "credit": "@gaurav_cyber"
         }), 400
     
     mobiles = [m.strip() for m in mobiles_param.split(',')]
@@ -68,7 +78,11 @@ def bulk_search():
             response = requests.get(api_url, timeout=10)
             
             if response.status_code == 200:
-                results[mobile] = response.json()
+                data = response.json()
+                # Remove developer field
+                if isinstance(data, dict) and "developer" in data:
+                    del data["developer"]
+                results[mobile] = data
             else:
                 results[mobile] = {"error": f"API returned {response.status_code}"}
                 
