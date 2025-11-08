@@ -9,7 +9,6 @@ CORS(app)
 def home():
     return jsonify({
         "message": "Mobile Search API",
-        "developer": "@gaurav_cyber",
         "usage": "Use ?mobile=number to search"
     })
 
@@ -84,8 +83,7 @@ def bulk_search():
 @app.route('/health')
 def health():
     return jsonify({
-        "status": "healthy",
-        "service": "mobile-search-api"
+        "status": "healthy"
     })
 
 if __name__ == '__main__':
