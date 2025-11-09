@@ -13,7 +13,7 @@ def home():
     return jsonify({
         "message": "RC Search API",
         "usage": "Use ?rc=number&api_key=your_key to search",
-        "example": "/api/search?rc=UP61S6030&api_key=19f740eba84398bb"
+        "example": "/api/search?rc=UP61S6030&api_key=rc123"
     })
 
 # Generate new API key (simple)
@@ -34,19 +34,15 @@ def search_by_rc():
     rc = request.args.get('rc', '')
     api_key = request.args.get('api_key', '')
     
-    # API key check
+    # API key check - SIMPLE ERROR MESSAGE
     if api_key not in ACTIVE_KEYS:
         return jsonify({
-            "error": "Invalid API Key",
-            "message": "Use /get-key to get API key or contact admin",
-            "your_key": api_key,
-            "valid_keys": ACTIVE_KEYS
+            "error": "Invalid API Key"
         }), 401
     
     if not rc:
         return jsonify({
-            "error": "RC number required",
-            "example": "/api/search?rc=UP61S6030&api_key=your_key"
+            "error": "RC number required"
         }), 400
     
     try:
@@ -70,20 +66,16 @@ def search_by_rc():
             return jsonify(data)
         else:
             return jsonify({
-                "error": "External API error",
-                "status_code": response.status_code,
-                "credit": "@gaurav_cyber"
+                "error": "External API error"
             }), 500
             
     except requests.exceptions.Timeout:
         return jsonify({
-            "error": "External API timeout",
-            "credit": "@gaurav_cyber"
+            "error": "External API timeout"
         }), 504
     except Exception as e:
         return jsonify({
-            "error": str(e),
-            "credit": "@gaurav_cyber"
+            "error": str(e)
         }), 500
 
 # Bulk search multiple RC numbers
@@ -92,19 +84,15 @@ def bulk_search():
     api_key = request.args.get('api_key', '')
     rcs_param = request.args.get('rcs', '')
     
-    # API key check
+    # API key check - SIMPLE ERROR
     if api_key not in ACTIVE_KEYS:
         return jsonify({
-            "error": "Invalid API Key",
-            "message": "Use /get-key to get API key",
-            "your_key": api_key
+            "error": "Invalid API Key"
         }), 401
     
     if not rcs_param:
         return jsonify({
-            "error": "RC numbers required",
-            "example": "/api/bulk-search?rcs=UP61S6030,DL4CAM8855&api_key=your_key",
-            "credit": "@gaurav_cyber"
+            "error": "RC numbers required"
         }), 400
     
     rcs = [r.strip() for r in rcs_param.split(',')]
