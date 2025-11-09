@@ -6,14 +6,14 @@ app = Flask(__name__)
 CORS(app)
 
 # Simple API keys - yahan se manage karo
-ACTIVE_KEYS = ["rc123", "rc456", "test789"]
+ACTIVE_KEYS = ["rc123", "rc456", "test789", "19f740eba84398bb"]
 
 @app.route('/')
 def home():
     return jsonify({
         "message": "RC Search API",
         "usage": "Use ?rc=number&api_key=your_key to search",
-        "example": "/api/search?rc=UP61S6030&api_key=rc123"
+        "example": "/api/search?rc=UP61S6030&api_key=19f740eba84398bb"
     })
 
 # Generate new API key (simple)
@@ -38,7 +38,9 @@ def search_by_rc():
     if api_key not in ACTIVE_KEYS:
         return jsonify({
             "error": "Invalid API Key",
-            "message": "Use /get-key to get API key or contact admin"
+            "message": "Use /get-key to get API key or contact admin",
+            "your_key": api_key,
+            "valid_keys": ACTIVE_KEYS
         }), 401
     
     if not rc:
@@ -94,7 +96,8 @@ def bulk_search():
     if api_key not in ACTIVE_KEYS:
         return jsonify({
             "error": "Invalid API Key",
-            "message": "Use /get-key to get API key"
+            "message": "Use /get-key to get API key",
+            "your_key": api_key
         }), 401
     
     if not rcs_param:
